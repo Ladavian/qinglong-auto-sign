@@ -39,19 +39,28 @@ def main():
     print("什么值得买（SMZDM）签到 - 完整版")
     print("=" * 60)
 
-    # 检查配置文件路径
-    config_path = os.environ.get('smzdm_config_path', '/ql/scripts/Cat-zaizai_ZaiZaiCat-Checkin/config/token.json')
-
-    if not os.path.exists(config_path):
-        msg = f"❌ 配置文件不存在: {config_path}\n\n请先：\n1. 订阅 ZaiZaiCat-Checkin 仓库\n2. 在 config/token.json 中配置 SMZDM Cookie"
+    # 添加原仓库路径到 Python 路径（支持多种命名）
+    repo_paths = [
+        '/ql/scripts/Cat-zaizai_ZaiZaiCat-Checkin',
+        '/ql/scripts/Cat-zaizai_ZaiZaiCat-Checkin_main',
+    ]
+    
+    repo_path = None
+    for path in repo_paths:
+        if os.path.exists(path):
+            repo_path = path
+            break
+    
+    if not repo_path:
+        msg = "❌ 未找到 ZaiZaiCat-Checkin 仓库\n\n请先订阅仓库：\nhttps://github.com/Cat-zaizai/ZaiZaiCat-Checkin.git"
         print(msg)
         send_webhook("❌ SMZDM配置错误", msg)
         return
-
-    # 添加原仓库路径到 Python 路径
-    repo_path = '/ql/scripts/Cat-zaizai_ZaiZaiCat-Checkin'
+    
     if repo_path not in sys.path:
         sys.path.insert(0, repo_path)
+    
+    print(f"✓ 使用仓库路径: {repo_path}")
 
     # 捕获输出用于通知
     output_lines = []
