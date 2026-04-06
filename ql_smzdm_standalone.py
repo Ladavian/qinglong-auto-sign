@@ -35,40 +35,43 @@ def get_accounts():
 
 
 def check_network():
-    """检查网络连接"""
+    """检查网络连接，返回各API的可用状态"""
     print("\n【网络检测】")
-    test_urls = [
-        'https://user-api.smzdm.com',
-        'https://try-api.smzdm.com',
-        'https://home-api.smzdm.com',
-    ]
+    test_urls = {
+        'user-api': 'https://user-api.smzdm.com',
+        'try-api': 'https://try-api.smzdm.com',
+        'home-api': 'https://home-api.smzdm.com',
+    }
     
-    all_ok = True
-    for url in test_urls:
+    status = {}
+    for name, url in test_urls.items():
         try:
             resp = requests.get(url, timeout=5)
-            print(f"✓ {url} - 正常")
+            print(f"✓ {name} - 正常")
+            status[name] = True
         except requests.exceptions.ConnectionError:
-            print(f"✗ {url} - 无法连接（DNS解析失败或网络不通）")
-            all_ok = False
+            print(f"✗ {name} - 无法连接")
+            status[name] = False
         except requests.exceptions.Timeout:
-            print(f"✗ {url} - 超时")
-            all_ok = False
+            print(f"✗ {name} - 超时")
+            status[name] = False
         except Exception as e:
-            print(f"⚠ {url} - {str(e)}")
+            print(f"⚠ {name} - {str(e)}")
+            status[name] = False
     
-    if not all_ok:
-        print("\n⚠️  检测到网络连接问题，可能是：")
-        print("   1. 青龙容器 DNS 配置问题")
-        print("   2. 网络防火墙限制")
-        print("   3. SMZDM API 暂时不可用")
-        print("\n建议：")
-        print("   - 检查青龙容器的 DNS 设置")
-        print("   - 尝试在容器中 ping user-api.smzdm.com")
-        print("   - 稍后再试\n")
+    # 检查核心功能是否可用
+    if not status.get('user-api'):
+        print("\n⚠️  核心 API 不可用，签到功能可能失败")
+        print("建议：检查青龙容器的 DNS 设置或网络连接")
+    else:
+        print("\n✓ 核心 API 正常，可以执行签到")
+        if not status.get('try-api'):
+            print("⚠️  众测任务 API 不可用，将跳过众测任务")
+        if not status.get('home-api'):
+            print("⚠️  互动任务 API 不可用，将跳过互动任务")
     
     print("=" * 60)
-    return all_ok
+    return status
 
 
 def send_webhook(title, content):
@@ -310,34 +313,6 @@ def do_interactive_tasks(cookie):
     return summary
 
 
-def process_account(cookie, index, total):
-    """处理单个账号的所有任务"""
-    print(f"\n{'='*60}")
-    print(f"开始处理账号 {index}/{total}")
-    print(f"{'='*60}")
-
-    results = []
-
-    # 1. 每日签到
-    print("\n【1】执行每日签到...")
-    sign_result = sign_in(cookie)
-    results.append(sign_result)
-
-    # 2. 众测任务
-    print("\n【2】执行众测任务...")
-    time.sleep(3)
-    zhongce_result = do_zhongce_tasks(cookie)
-    results.append(zhongce_result)
-
-    # 3. 互动任务
-    print("\n【3】执行互动任务...")
-    time.sleep(3)
-    interactive_result = do_interactive_tasks(cookie)
-    results.append(interactive_result)
-
-    return "\n".join(results)
-
-
 def main():
     print("=" * 60)
     print("什么值得买（SMZDM）独立签到脚本 - 完整版")
@@ -345,10 +320,12 @@ def main():
     print("=" * 60)
 
     # 网络检测
-    network_ok = check_network()
-    if not network_ok:
-        print("\n⚠️  网络检测未通过，建议先解决网络问题")
-        send_webhook("⚠️ SMZDM网络异常", "检测到网络连接问题，请检查青龙容器的DNS配置或防火墙设置")
+    network_status = check_network()
+    
+    # 检查核心 API 是否可用
+    if not network_status.get('user-api'):
+        print("\n❌ 核心 API 不可用，无法执行签到")
+        send_webhook("❌ SMZDM签到失败", "核心 API (user-api.smzdm.com) 无法连接，请检查网络配置")
         return
 
     accounts = get_accounts()
@@ -360,7 +337,7 @@ def main():
 
     all_results = []
     for i, acc in enumerate(accounts, 1):
-        result = process_account(acc['cookie'], i, len(accounts))
+        result = process_account(acc['cookie'], i, len(accounts), network_status)
         all_results.append(f"账号{i}:\n{result}")
 
         if i < len(accounts):
@@ -378,6 +355,45 @@ def main():
     send_webhook("✅ SMZDM签到完成", summary)
 
     print("\n✨ 所有任务完成")
+
+
+def process_account(cookie, index, total, network_status=None):
+    """处理单个账号的所有任务"""
+    if network_status is None:
+        network_status = {'user-api': True, 'try-api': False, 'home-api': False}
+    
+    print(f"\n{'='*60}")
+    print(f"开始处理账号 {index}/{total}")
+    print(f"{'='*60}")
+
+    results = []
+
+    # 1. 每日签到（核心功能）
+    print("\n【1】执行每日签到...")
+    sign_result = sign_in(cookie)
+    results.append(sign_result)
+
+    # 2. 众测任务（需要 try-api）
+    if network_status.get('try-api'):
+        print("\n【2】执行众测任务...")
+        time.sleep(3)
+        zhongce_result = do_zhongce_tasks(cookie)
+        results.append(zhongce_result)
+    else:
+        print("\n【2】跳过众测任务（API 不可用）")
+        results.append("⚠️ 众测任务：API 不可用，已跳过")
+
+    # 3. 互动任务（需要 home-api）
+    if network_status.get('home-api'):
+        print("\n【3】执行互动任务...")
+        time.sleep(3)
+        interactive_result = do_interactive_tasks(cookie)
+        results.append(interactive_result)
+    else:
+        print("\n【3】跳过互动任务（API 不可用）")
+        results.append("⚠️ 互动任务：API 不可用，已跳过")
+
+    return "\n".join(results)
 
 
 if __name__ == '__main__':
