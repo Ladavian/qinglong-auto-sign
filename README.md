@@ -197,12 +197,14 @@ ugreen_password: pass1&pass2&pass3
 
 ### 配置
 
-添加环境变量：
+在青龙面板 → 环境变量中添加：
 
 ```
-名称: NOTIFY_WEBHOOK
+名称: CUSTOM_WEBHOOK_URL
 值: https://your-webhook-url.com/api/notify
 ```
+
+> **提示**: 此配置同时适用于本项目和 ZaiZaiCat-Checkin 等其他项目，实现统一通知管理。
 
 ### Webhook 请求格式
 
@@ -225,6 +227,14 @@ ugreen_password: pass1&pass2&pass3
 - 飞书机器人
 - Server酱
 - 任何支持 JSON POST 的自定义 API
+
+### 多项目统一配置
+
+如果你同时使用多个签到项目，只需配置一次 `CUSTOM_WEBHOOK_URL`，所有项目都会自动使用同一个 webhook 地址：
+
+- ✅ qinglong-auto-sign（本项目）
+- ✅ ZaiZaiCat-Checkin（配合 webhook_wrapper.py）
+- ✅ 其他支持该变量的项目
 
 ---
 

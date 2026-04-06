@@ -7,7 +7,7 @@
 环境变量配置：
 export pcbeta_username="你的用户名"
 export pcbeta_password="你的密码"
-export NOTIFY_WEBHOOK="https://your-webhook-url.com/api/notify"  # 可选，自定义通知webhook地址
+export CUSTOM_WEBHOOK_URL="https://your-webhook-url.com/api/notify"  # 可选，自定义通知webhook地址
 
 多账号用 & 或 @ 或 \n 分隔，例如：
 export pcbeta_username="user1&user2"

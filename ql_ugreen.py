@@ -8,7 +8,7 @@
 export ugreen_cookie="你的Cookie字符串"              # 优先使用，可选
 export ugreen_username="你的用户名"                  # Cookie失效时使用
 export ugreen_password="你的密码"                    # Cookie失效时使用
-export NOTIFY_WEBHOOK="https://your-webhook-url.com/api/notify"  # 可选，自定义通知webhook地址
+export CUSTOM_WEBHOOK_URL="https://your-webhook-url.com/api/notify"  # 可选，自定义通知webhook地址
 
 多账号用 & 或 @ 或 \n 分隔，例如：
 export ugreen_cookie="cookie1&cookie2"
