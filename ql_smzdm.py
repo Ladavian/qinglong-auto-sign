@@ -22,15 +22,30 @@ def send_webhook(title, content):
     """发送自定义webhook通知"""
     import requests
     webhook_url = os.environ.get('CUSTOM_WEBHOOK_URL', '') or os.environ.get('NOTIFY_WEBHOOK', '')
+    
+    print(f"\n[Webhook] 检查环境变量...")
+    print(f"[Webhook] CUSTOM_WEBHOOK_URL: {os.environ.get('CUSTOM_WEBHOOK_URL', '未设置')[:20]}..." if os.environ.get('CUSTOM_WEBHOOK_URL') else "[Webhook] CUSTOM_WEBHOOK_URL: 未设置")
+    print(f"[Webhook] NOTIFY_WEBHOOK: {os.environ.get('NOTIFY_WEBHOOK', '未设置')[:20]}..." if os.environ.get('NOTIFY_WEBHOOK') else "[Webhook] NOTIFY_WEBHOOK: 未设置")
+    
     if not webhook_url:
-        print("未配置 CUSTOM_WEBHOOK_URL，跳过通知")
+        print("[Webhook] ⚠️ 未配置 webhook URL，跳过通知")
         return False
+    
+    print(f"[Webhook] ✓ 使用 URL: {webhook_url[:30]}...")
+    
     try:
-        requests.post(webhook_url, json={"title": title, "content": content, "timestamp": int(time.time())},
+        print(f"[Webhook] 正在发送通知...")
+        response = requests.post(webhook_url, json={"title": title, "content": content, "timestamp": int(time.time())},
                      headers={"Content-Type": "application/json"}, timeout=10)
-        return True
+        if response.status_code == 200:
+            print(f"[Webhook] ✓ 通知发送成功")
+            return True
+        else:
+            print(f"[Webhook] ✗ 通知发送失败: HTTP {response.status_code}")
+            print(f"[Webhook] 响应内容: {response.text[:200]}")
+            return False
     except Exception as e:
-        print(f"通知发送失败: {e}")
+        print(f"[Webhook] ✗ 通知发送异常: {e}")
         return False
 
 
