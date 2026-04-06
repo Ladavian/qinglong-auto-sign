@@ -436,10 +436,11 @@ def send_webhook_notify(title, content):
     Returns:
         bool: 是否发送成功
     """
-    webhook_url = os.environ.get('NOTIFY_WEBHOOK', '')
+    # 优先使用 CUSTOM_WEBHOOK_URL，兼容 NOTIFY_WEBHOOK
+    webhook_url = os.environ.get('CUSTOM_WEBHOOK_URL', '') or os.environ.get('NOTIFY_WEBHOOK', '')
 
     if not webhook_url:
-        print("未配置 NOTIFY_WEBHOOK，跳过通知")
+        print("未配置 CUSTOM_WEBHOOK_URL 或 NOTIFY_WEBHOOK，跳过通知")
         return False
 
     try:
