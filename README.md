@@ -4,11 +4,27 @@
 
 ## 支持的站点
 
+### 完全独立脚本（推荐）
+不依赖任何外部仓库，开箱即用：
+
+- [x] 什么值得买 (SMZDM) - `ql_smzdm_standalone.py` ⭐ **完整版**
+  - ✅ 每日签到
+  - ✅ 众测任务申请
+  - ✅ 互动任务（点赞等）
+- [x] WPS - `ql_wps_standalone.py` ⭐ **完整版**
+  - ✅ 天天领福利（每日签到）
+  - ✅ 任务中心自动完成任务
+- [x] 恩山论坛 (Enshan) - `ql_enshan.py`
 - [x] 远景论坛 (PCBeta) - `ql_pcbeta.py`
 - [x] 绿联论坛 (UGreen Discuz) - `ql_ugreen.py`
-- [x] 什么值得买 (SMZDM) - `ql_smzdm.py`
-- [x] 恩山论坛 (Enshan) - `ql_enshan.py`
-- [x] WPS - `ql_wps.py`
+
+### 包装器脚本（需要订阅外部仓库）
+以下脚本需要订阅 ZaiZaiCat-Checkin 仓库才能使用完整功能：
+
+- [ ] 什么值得买 (SMZDM) - `ql_smzdm.py`（需要 ZaiZaiCat-Checkin）
+- [ ] WPS - `ql_wps.py`（需要 ZaiZaiCat-Checkin）
+
+> 💡 **建议**: 优先使用独立脚本（`*_standalone.py`），无需订阅其他仓库，不会被覆盖。
 
 ---
 
@@ -194,7 +210,17 @@ ugreen_password: pass1&pass2&pass3
 
 ---
 
-### 什么值得买 (SMZDM)
+### 什么值得买 (SMZDM) - 独立完整版 ⭐
+
+> **推荐使用**: `ql_smzdm_standalone.py` - 完全独立，不依赖任何外部仓库
+
+#### 功能特性
+
+- ✅ 每日自动签到
+- ✅ 众测任务自动申请
+- ✅ 互动任务（点赞等）
+- ✅ 用户信息查询
+- ✅ 多账号支持
 
 #### 环境变量
 
@@ -220,7 +246,27 @@ smzdm_cookie: cookie1&cookie2&cookie3
 #### 定时任务
 
 ```
-名称: 什么值得买签到
+名称: 什么值得买签到（独立版）
+命令: python3 /ql/scripts/Ladavian_qinglong-auto-sign/ql_smzdm_standalone.py
+定时规则: 0 8 * * *
+```
+
+---
+
+### 什么值得买 (SMZDM) - 包装器版本
+
+> ⚠️ 此版本需要订阅 ZaiZaiCat-Checkin 仓库，建议使用上方的独立版本
+
+#### 环境变量
+
+| 变量名 | 说明 | 示例 |
+|--------|------|------|
+| `smzdm_config_path` | 配置文件路径 | `/ql/scripts/Cat-zaizai_ZaiZaiCat-Checkin/config/token.json` |
+
+#### 定时任务
+
+```
+名称: 什么值得买签到（包装器版）
 命令: python3 /ql/scripts/Ladavian_qinglong-auto-sign/ql_smzdm.py
 定时规则: 0 8 * * *
 ```
@@ -253,7 +299,16 @@ enshan_password: pass1&pass2&pass3
 
 ---
 
-### WPS
+### WPS - 独立完整版 ⭐
+
+> **推荐使用**: `ql_wps_standalone.py` - 完全独立，不依赖任何外部仓库
+
+#### 功能特性
+
+- ✅ 天天领福利（每日签到）
+- ✅ 任务中心自动完成任务
+- ✅ 用户信息查询
+- ✅ 多账号支持
 
 #### 环境变量
 
@@ -279,7 +334,27 @@ wps_cookie: cookie1&cookie2&cookie3
 #### 定时任务
 
 ```
-名称: WPS签到
+名称: WPS签到（独立版）
+命令: python3 /ql/scripts/Ladavian_qinglong-auto-sign/ql_wps_standalone.py
+定时规则: 0 9 * * *
+```
+
+---
+
+### WPS - 包装器版本
+
+> ⚠️ 此版本需要订阅 ZaiZaiCat-Checkin 仓库，建议使用上方的独立版本
+
+#### 环境变量
+
+| 变量名 | 说明 | 示例 |
+|--------|------|------|
+| `wps_config_path` | 配置文件路径 | `/ql/scripts/Cat-zaizai_ZaiZaiCat-Checkin/config/token.json` |
+
+#### 定时任务
+
+```
+名称: WPS签到（包装器版）
 命令: python3 /ql/scripts/Ladavian_qinglong-auto-sign/ql_wps.py
 定时规则: 0 9 * * *
 ```
@@ -337,29 +412,47 @@ wps_cookie: cookie1&cookie2&cookie3
 
 ```
 qinglong-auto-sign/
-├── ql_pcbeta.py       # 远景论坛签到脚本
-├── ql_ugreen.py       # 绿联论坛签到脚本
-├── requirements.txt   # Python依赖
-└── README.md          # 说明文档
+├── ql_smzdm_standalone.py    # ⭐ 什么值得买独立完整版（推荐）
+├── ql_wps_standalone.py      # ⭐ WPS独立完整版（推荐）
+├── ql_pcbeta.py              # 远景论坛签到脚本
+├── ql_ugreen.py              # 绿联论坛签到脚本
+├── ql_enshan.py              # 恩山论坛签到脚本
+├── ql_smzdm.py               # 什么值得买包装器版（需外部仓库）
+├── ql_wps.py                 # WPS包装器版（需外部仓库）
+├── webhook_wrapper.py        # Webhook通知包装器（用于外部仓库）
+├── requirements.txt          # Python依赖
+└── README.md                 # 说明文档
 ```
 
 ---
 
 ## 注意事项
 
-1. **账号安全**: 请确保账号密码正确，避免频繁登录失败导致账号锁定
-2. **签到频率**: 建议设置合理的签到时间（如每天一次），避免频繁请求
-3. **依赖安装**: 绿联论坛需要安装 `pycryptodome` 库
-4. **通知配置**: `NOTIFY_WEBHOOK` 是可选的，不配置不影响签到功能
-5. **多账号延迟**: 多账号签到之间会自动延迟 5 秒，避免请求过快
-6. **脚本更新**: 
+1. **推荐使用独立脚本**: `ql_smzdm_standalone.py` 和 `ql_wps_standalone.py` 完全独立，不依赖外部仓库
+2. **账号安全**: 请确保账号密码正确，避免频繁登录失败导致账号锁定
+3. **签到频率**: 建议设置合理的签到时间（如每天一次），避免频繁请求
+4. **依赖安装**: 绿联论坛需要安装 `pycryptodome` 库
+5. **通知配置**: `CUSTOM_WEBHOOK_URL` 是可选的，不配置不影响签到功能
+6. **多账号延迟**: 多账号签到之间会自动延迟 5 秒，避免请求过快
+7. **脚本更新**: 
    - 订阅方式：在订阅管理中点击"运行"即可更新
    - 定时任务方式：`ql repo` 任务会每天自动拉取最新脚本
-7. **青龙版本**: 订阅功能需要青龙面板 2.12+ 版本
+8. **青龙版本**: 订阅功能需要青龙面板 2.12+ 版本
+9. **包装器脚本**: `ql_smzdm.py` 和 `ql_wps.py` 需要订阅 ZaiZaiCat-Checkin 仓库才能使用
 
 ---
 
 ## 常见问题
+
+### Q: 独立脚本和包装器脚本有什么区别？
+A: 
+- **独立脚本**（`*_standalone.py`）：完全独立，不依赖任何外部仓库，不会被覆盖，推荐使用
+- **包装器脚本**：需要订阅 ZaiZaiCat-Checkin 仓库，功能更完整但配置复杂
+
+### Q: 应该使用哪个版本的 SMZDM/WPS 脚本？
+A: 推荐使用独立版本：
+- SMZDM: `ql_smzdm_standalone.py` - 支持签到、众测任务、互动任务
+- WPS: `ql_wps_standalone.py` - 支持签到、任务中心
 
 ### Q: 如何使用订阅方式拉取脚本？
 A: 在青龙面板 → 订阅管理 → 添加订阅，填写仓库地址 `https://github.com/Ladavian/qinglong-auto-sign.git`，白名单填写 `ql_`，保存后点击运行即可。
