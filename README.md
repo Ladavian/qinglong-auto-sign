@@ -4,8 +4,11 @@
 
 ## 支持的站点
 
-- [x] 远景论坛 (PCBeta)
-- [x] 绿联论坛 (UGreen Discuz)
+- [x] 远景论坛 (PCBeta) - `ql_pcbeta.py`
+- [x] 绿联论坛 (UGreen Discuz) - `ql_ugreen.py`
+- [x] 什么值得买 (SMZDM) - `ql_smzdm.py`
+- [x] 恩山论坛 (Enshan) - `ql_enshan.py`
+- [x] WPS - `ql_wps.py`
 
 ---
 
@@ -188,6 +191,98 @@ ugreen_password: pass1&pass2&pass3
 2. **Cookie 检测**：每次签到前检查 Cookie 是否有效
 3. **自动刷新**：Cookie 失效时，自动通过 OAuth API 登录获取新 Cookie
 4. **访问即签到**：Discuz 论坛访问用户主页即完成签到
+
+---
+
+### 什么值得买 (SMZDM)
+
+#### 环境变量
+
+| 变量名 | 说明 | 示例 |
+|--------|------|------|
+| `smzdm_cookie` | Cookie 字符串 | `your_cookie_here` |
+
+**多账号配置**（使用 `&`、`@` 或换行符分隔）：
+
+```
+smzdm_cookie: cookie1&cookie2&cookie3
+```
+
+#### 如何获取 Cookie
+
+1. 浏览器打开 https://www.smzdm.com/ 并登录
+2. 按 F12 打开开发者工具
+3. 切换到 Network（网络）标签
+4. 刷新页面，点击任意请求
+5. 在 Request Headers 中找到 `Cookie` 字段
+6. 复制整个 Cookie 值
+
+#### 定时任务
+
+```
+名称: 什么值得买签到
+命令: python3 /ql/scripts/Ladavian_qinglong-auto-sign/ql_smzdm.py
+定时规则: 0 8 * * *
+```
+
+---
+
+### 恩山论坛 (Enshan)
+
+#### 环境变量
+
+| 变量名 | 说明 | 示例 |
+|--------|------|------|
+| `enshan_username` | 用户名 | `your_username` |
+| `enshan_password` | 密码 | `your_password` |
+
+**多账号配置**（使用 `&`、`@` 或换行符分隔）：
+
+```
+enshan_username: user1&user2&user3
+enshan_password: pass1&pass2&pass3
+```
+
+#### 定时任务
+
+```
+名称: 恩山论坛签到
+命令: python3 /ql/scripts/Ladavian_qinglong-auto-sign/ql_enshan.py
+定时规则: 0 8 * * *
+```
+
+---
+
+### WPS
+
+#### 环境变量
+
+| 变量名 | 说明 | 示例 |
+|--------|------|------|
+| `wps_cookie` | Cookie 字符串（需要包含 wps_sid） | `your_cookie_here` |
+
+**多账号配置**（使用 `&`、`@` 或换行符分隔）：
+
+```
+wps_cookie: cookie1&cookie2&cookie3
+```
+
+#### 如何获取 Cookie
+
+1. 浏览器打开 https://www.wps.cn/ 并登录
+2. 按 F12 打开开发者工具
+3. 切换到 Network（网络）标签
+4. 刷新页面，点击任意请求
+5. 在 Request Headers 中找到 `Cookie` 字段
+6. 复制整个 Cookie 值（确保包含 `wps_sid`）
+
+#### 定时任务
+
+```
+名称: WPS签到
+命令: python3 /ql/scripts/Ladavian_qinglong-auto-sign/ql_wps.py
+定时规则: 0 9 * * *
+```
 
 ---
 
