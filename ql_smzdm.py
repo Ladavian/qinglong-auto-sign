@@ -39,10 +39,12 @@ def main():
     print("什么值得买（SMZDM）签到 - 完整版")
     print("=" * 60)
 
-    # 添加原仓库路径到 Python 路径（支持多种命名）
+    # 添加原仓库路径到 Python 路径（支持多种路径和命名）
     repo_paths = [
         '/ql/scripts/Cat-zaizai_ZaiZaiCat-Checkin',
         '/ql/scripts/Cat-zaizai_ZaiZaiCat-Checkin_main',
+        '/ql/data/scripts/Cat-zaizai_ZaiZaiCat-Checkin',
+        '/ql/data/scripts/Cat-zaizai_ZaiZaiCat-Checkin_main',
     ]
     
     repo_path = None
@@ -52,10 +54,17 @@ def main():
             break
     
     if not repo_path:
-        msg = "❌ 未找到 ZaiZaiCat-Checkin 仓库\n\n请先订阅仓库：\nhttps://github.com/Cat-zaizai/ZaiZaiCat-Checkin.git"
-        print(msg)
-        send_webhook("❌ SMZDM配置错误", msg)
-        return
+        # 尝试动态查找
+        import glob
+        matches = glob.glob('/ql/*/scripts/*ZaiZaiCat*')
+        if matches:
+            repo_path = matches[0]
+            print(f"✓ 自动找到仓库路径: {repo_path}")
+        else:
+            msg = "❌ 未找到 ZaiZaiCat-Checkin 仓库\n\n请先订阅仓库：\nhttps://github.com/Cat-zaizai/ZaiZaiCat-Checkin.git"
+            print(msg)
+            send_webhook("❌ SMZDM配置错误", msg)
+            return
     
     if repo_path not in sys.path:
         sys.path.insert(0, repo_path)
