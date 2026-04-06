@@ -69,7 +69,18 @@ def main():
     if repo_path not in sys.path:
         sys.path.insert(0, repo_path)
     
+    # 添加 script 子目录到路径（解决模块导入问题）
+    script_path = os.path.join(repo_path, 'script')
+    if os.path.exists(script_path) and script_path not in sys.path:
+        sys.path.insert(0, script_path)
+    
+    # 添加 sign_daily_task 子目录到路径
+    smzdm_task_path = os.path.join(repo_path, 'script', 'smzdm', 'sign_daily_task')
+    if os.path.exists(smzdm_task_path) and smzdm_task_path not in sys.path:
+        sys.path.insert(0, smzdm_task_path)
+    
     print(f"✓ 使用仓库路径: {repo_path}")
+    print(f"✓ Python 路径已添加: {script_path}")
 
     # 捕获输出用于通知
     output_lines = []
