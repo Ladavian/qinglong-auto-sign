@@ -1,0 +1,135 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+WPS 青龙面板签到脚本 - 完整版
+支持任务中心、天天领福利双页面任务
+
+此脚本通过调用 ZaiZaiCat-Checkin 的完整功能，并添加自定义 webhook 通知
+
+环境变量配置：
+export wps_config_path="/ql/scripts/Cat-zaizai_ZaiZaiCat-Checkin/config/token.json"
+export CUSTOM_WEBHOOK_URL="https://your-webhook-url.com/api/notify"  # 可选
+
+注意：需要先订阅 ZaiZaiCat-Checkin 仓库并在 config/token.json 中配置账号
+"""
+import os
+import sys
+import time
+
+
+def send_webhook(title, content):
+    """发送自定义webhook通知"""
+    import requests
+    webhook_url = os.environ.get('CUSTOM_WEBHOOK_URL', '') or os.environ.get('NOTIFY_WEBHOOK', '')
+    if not webhook_url:
+        print("未配置 CUSTOM_WEBHOOK_URL，跳过通知")
+        return False
+    try:
+        requests.post(webhook_url, json={"title": title, "content": content, "timestamp": int(time.time())},
+                     headers={"Content-Type": "application/json"}, timeout=10)
+        return True
+    except Exception as e:
+        print(f"通知发送失败: {e}")
+        return False
+
+
+def main():
+    print("=" * 60)
+    print("WPS 签到 - 完整版（任务中心 + 天天领福利）")
+    print("=" * 60)
+
+    # 检查配置文件路径
+    config_path = os.environ.get('wps_config_path', '/ql/scripts/Cat-zaizai_ZaiZaiCat-Checkin/config/token.json')
+
+    if not os.path.exists(config_path):
+        msg = f"❌ 配置文件不存在: {config_path}\n\n请先：\n1. 订阅 ZaiZaiCat-Checkin 仓库\n2. 在 config/token.json 中配置 WPS Cookie"
+        print(msg)
+        send_webhook("❌ WPS配置错误", msg)
+        return
+
+    # 添加原仓库路径到 Python 路径
+    repo_path = '/ql/scripts/Cat-zaizai_ZaiZaiCat-Checkin'
+    if repo_path not in sys.path:
+        sys.path.insert(0, repo_path)
+
+    # 捕获输出用于通知
+    output_lines = []
+    import builtins
+    old_print = builtins.print
+    
+    def capture_print(*args, **kwargs):
+        text = ' '.join(str(a) for a in args)
+        output_lines.append(text)
+        old_print(*args, **kwargs)
+    
+    builtins.print = capture_print
+
+    start_time = time.time()
+    
+    try:
+        # 导入原仓库的 WPS 模块
+        from script.wps.main import WPSMultiPageRunner
+        
+        runner = WPSMultiPageRunner()
+        
+        # 替换运行方法，添加自定义 webhook
+        orig_run = runner.run
+        
+        def wrapped_run():
+            start = time.time()
+            try:
+                orig_run()
+            except Exception as e:
+                print(f"执行失败: {e}")
+                import traceback
+                traceback.print_exc()
+                send_webhook("❌ WPS签到失败", str(e))
+                return
+
+            duration = int(time.time() - start)
+            success_count = sum(1 for r in runner.account_results if r.get('success'))
+            fail_count = len(runner.account_results) - success_count
+
+            lines = [
+                f"👥 账号: {len(runner.account_results)}个",
+                f"✅ 成功: {success_count}",
+                f"❌ 失败: {fail_count}",
+                f"⏱️ 耗时: {duration}秒",
+                "",
+                "📋 执行页面:",
+                "   - 任务中心",
+                "   - 天天领福利"
+            ]
+
+            for i, result in enumerate(runner.account_results, 1):
+                name = result.get('account_name', f'账号{i}')
+                if result.get('success'):
+                    lines.append(f"\n✅ [{name}] 签到成功")
+                else:
+                    error_msg = result.get('error', '未知错误')
+                    lines.append(f"\n❌ [{name}]: {error_msg}")
+
+            send_webhook("✅ WPS签到完成", "\n".join(lines))
+
+        # 替换运行方法
+        runner.run = wrapped_run
+        
+        # 执行任务
+        print("\n开始执行 WPS 任务...\n")
+        runner.run()
+
+    except Exception as e:
+        msg = f"❌ 执行失败: {str(e)}"
+        print(msg)
+        import traceback
+        traceback.print_exc()
+        send_webhook("❌ WPS签到失败", msg)
+    finally:
+        builtins.print = old_print
+        print("\n" + "=" * 60)
+        print("✨ 完成")
+        print("=" * 60)
+
+
+if __name__ == '__main__':
+    main()
