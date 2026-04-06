@@ -88,7 +88,10 @@ python3 /ql/scripts/Ladavian_qinglong-auto-sign/ql_wps_standalone.py
 #### 恩山论坛
 
 ```bash
-# 环境变量
+# 方式一：Cookie（推荐）
+enshan_cookie=cookie1&cookie2&cookie3
+
+# 方式二：用户名密码（备用）
 enshan_username=user1&user2
 enshan_password=pass1&pass2
 
@@ -96,6 +99,11 @@ enshan_password=pass1&pass2
 python3 /ql/scripts/Ladavian_qinglong-auto-sign/ql_enshan.py
 # 建议时间: 0 8 * * *
 ```
+
+**获取 Cookie：**
+1. 浏览器登录 https://www.right.com.cn/
+2. F12 → Network → 刷新页面
+3. 复制请求头中的 Cookie 值
 
 ---
 
