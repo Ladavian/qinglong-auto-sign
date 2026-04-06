@@ -192,7 +192,7 @@ def sign_in(username, password):
                 print(f"[{name}] ✓ {sign_status}（未获取到积分详情）")
         except Exception as e:
             result_msg += f"✓ {sign_status}（获取积分信息失败: {e}）"
-            print(f"[{name}] ✓ {sign_status}（获取积分信息失败: {e}）"
+            print(f"[{name}] ✓ {sign_status}（获取积分信息失败: {e}）")
 
         return result_msg
 
