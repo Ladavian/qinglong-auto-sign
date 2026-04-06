@@ -139,17 +139,40 @@ pcbeta_password: pass1&pass2&pass3
 
 #### 环境变量
 
+**方式一：使用 Cookie（推荐，更稳定）**
+
+| 变量名 | 说明 | 示例 |
+|--------|------|------|
+| `ugreen_cookie` | 登录后的 Cookie 字符串 | `6LQh_2132_auth=xxx; 6LQh_2132_saltkey=xxx` |
+
+**方式二：使用用户名密码（Cookie 失效时自动登录）**
+
 | 变量名 | 说明 | 示例 |
 |--------|------|------|
 | `ugreen_username` | 用户名 | `your_username` |
 | `ugreen_password` | 密码 | `your_password` |
 
+> **提示**: 可以同时配置 Cookie 和用户名密码。脚本会优先使用 Cookie，当 Cookie 失效时自动通过 OAuth 登录获取新 Cookie。
+
 **多账号配置**（使用 `&`、`@` 或换行符分隔）：
 
 ```
+# Cookie 方式
+ugreen_cookie: cookie1&cookie2&cookie3
+
+# 或用户名密码方式
 ugreen_username: user1&user2&user3
 ugreen_password: pass1&pass2&pass3
 ```
+
+#### 如何获取 Cookie
+
+1. 浏览器打开 https://club.ugnas.com/ 并登录
+2. 按 F12 打开开发者工具
+3. 切换到 Network（网络）标签
+4. 刷新页面，点击任意请求
+5. 在 Request Headers 中找到 `Cookie` 字段
+6. 复制整个 Cookie 值到 `ugreen_cookie` 环境变量
 
 #### 定时任务
 
@@ -161,12 +184,10 @@ ugreen_password: pass1&pass2&pass3
 
 #### 工作原理
 
-绿联论坛使用 OAuth API 进行登录：
-1. 获取加密密钥
-2. AES-128-CBC 加密用户名和密码
-3. 通过 OAuth API 获取访问令牌
-4. 授权回调设置 Cookie
-5. 访问用户主页完成签到（Discuz 论坛访问即签到）
+1. **优先使用 Cookie**：直接使用配置的 Cookie 访问论坛完成签到
+2. **Cookie 检测**：每次签到前检查 Cookie 是否有效
+3. **自动刷新**：Cookie 失效时，自动通过 OAuth API 登录获取新 Cookie
+4. **访问即签到**：Discuz 论坛访问用户主页即完成签到
 
 ---
 

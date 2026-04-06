@@ -2,14 +2,17 @@
 # -*- coding: utf-8 -*-
 """
 绿联论坛（UGreen Discuz）青龙面板签到脚本
-支持 OAuth API 登录方式，无需浏览器自动化
+优先使用 Cookie 签到，Cookie 失效时自动通过 OAuth 登录获取新 Cookie
 
 环境变量配置：
-export ugreen_username="你的用户名"
-export ugreen_password="你的密码"
+export ugreen_cookie="你的Cookie字符串"              # 优先使用，可选
+export ugreen_username="你的用户名"                  # Cookie失效时使用
+export ugreen_password="你的密码"                    # Cookie失效时使用
 export NOTIFY_WEBHOOK="https://your-webhook-url.com/api/notify"  # 可选，自定义通知webhook地址
 
 多账号用 & 或 @ 或 \n 分隔，例如：
+export ugreen_cookie="cookie1&cookie2"
+或
 export ugreen_username="user1&user2"
 export ugreen_password="pass1&pass2"
 """
@@ -26,30 +29,48 @@ from urllib.parse import quote
 
 def get_env():
     """获取环境变量配置"""
+    cookie = os.environ.get('ugreen_cookie', '')
     username = os.environ.get('ugreen_username', '')
     password = os.environ.get('ugreen_password', '')
 
-    if not username or not password:
-        print('未配置环境变量 ugreen_username 或 ugreen_password')
-        return []
-
-    # 支持多种分隔符
-    for sep in ['&', '@', '\n']:
-        if sep in username:
-            usernames = username.split(sep)
-            passwords = password.split(sep)
-            break
-    else:
-        usernames = [username]
-        passwords = [password]
-
-    # 清理空格和空值
     accounts = []
-    for u, p in zip(usernames, passwords):
-        u = u.strip()
-        p = p.strip()
-        if u and p:
-            accounts.append({'username': u, 'password': p})
+
+    # 如果配置了 Cookie，优先使用 Cookie
+    if cookie:
+        # 支持多种分隔符
+        for sep in ['&', '@', '\n']:
+            if sep in cookie:
+                cookies = cookie.split(sep)
+                break
+        else:
+            cookies = [cookie]
+
+        for i, c in enumerate(cookies):
+            c = c.strip()
+            if c:
+                accounts.append({
+                    'cookie': c,
+                    'username': username.split('&')[i] if '&' in username else (username.split('@')[i] if '@' in username else username),
+                    'password': password.split('&')[i] if '&' in password else (password.split('@')[i] if '@' in password else password)
+                })
+    elif username and password:
+        # 如果没有 Cookie，使用用户名密码
+        for sep in ['&', '@', '\n']:
+            if sep in username:
+                usernames = username.split(sep)
+                passwords = password.split(sep)
+                break
+        else:
+            usernames = [username]
+            passwords = [password]
+
+        for u, p in zip(usernames, passwords):
+            u = u.strip()
+            p = p.strip()
+            if u and p:
+                accounts.append({'cookie': '', 'username': u, 'password': p})
+    else:
+        print('未配置环境变量 ugreen_cookie 或 ugreen_username/ugreen_password')
 
     return accounts
 
@@ -77,8 +98,7 @@ def aes_encrypt(text, key_str, iv_str):
         encrypted = cipher.encrypt(padded_data)
         return base64.b64encode(encrypted).decode('utf-8')
     except ImportError:
-        # 如果没有 pycryptodome，使用纯 Python 实现
-        print("警告: 未安装 pycryptodome，尝试使用备用方法...")
+        print("警告: 未安装 pycryptodome，无法进行 OAuth 登录")
         return None
 
 
@@ -121,7 +141,7 @@ def oauth_login(username, password):
             print("[OAuth] 未获取到有效的加密密钥")
             return False, ''
 
-        print(f"[OAuth] 密钥获取成功")
+        print("[OAuth] 密钥获取成功")
 
         # 2. AES 加密用户名和密码
         enc_user = aes_encrypt(username, encrypt_key, api_uuid)
@@ -210,6 +230,7 @@ def oauth_login(username, password):
             ck = '; '.join(cookie_items)
             if '6LQh_2132_BBRules_ok=' not in ck:
                 ck += '; 6LQh_2132_BBRules_ok=1'
+            print("[OAuth] 登录成功，已获取 Cookie")
             return True, ck
 
         return False, ''
@@ -217,6 +238,40 @@ def oauth_login(username, password):
     except Exception as e:
         print(f"[OAuth] 登录异常: {e}")
         return False, ''
+
+
+def check_cookie_valid(cookie):
+    """
+    检查 Cookie 是否有效
+
+    Args:
+        cookie: Cookie 字符串
+
+    Returns:
+        bool: Cookie 是否有效
+    """
+    try:
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36',
+            'Cookie': cookie
+        }
+        resp = requests.get('https://club.ugnas.com/forum.php', headers=headers, timeout=10, allow_redirects=False)
+
+        # 如果返回 302 重定向到登录页，说明 Cookie 失效
+        if resp.status_code == 302:
+            location = resp.headers.get('location', '').lower()
+            if 'login' in location or 'member.php' in location:
+                return False
+
+        # 检查响应内容是否包含登录表单
+        if 'login' in resp.text.lower() and 'password' in resp.text.lower():
+            return False
+
+        return True
+
+    except Exception as e:
+        print(f"[Cookie检查] 异常: {e}")
+        return False
 
 
 def fetch_user_profile(cookie):
@@ -418,31 +473,60 @@ def send_webhook_notify(title, content):
         return False
 
 
-def sign_in(username, password):
+def sign_in(account):
     """
     绿联论坛签到
 
     Args:
-        username: 用户名
-        password: 密码
+        account: 账号信息字典，包含 cookie, username, password
 
     Returns:
         str: 签到结果消息
     """
     name = "绿联论坛"
     result_msg = f"[{name}] "
+    cookie = account.get('cookie', '')
+    username = account.get('username', '')
+    password = account.get('password', '')
 
     try:
-        print(f"[{name}] 开始 OAuth 登录...")
+        # 1. 优先使用 Cookie
+        if cookie:
+            print(f"[{name}] 使用 Cookie 签到...")
 
-        # 1. OAuth 登录
-        success, cookie = oauth_login(username, password)
-        if not success:
-            msg = "OAuth 登录失败"
+            # 检查 Cookie 是否有效
+            if not check_cookie_valid(cookie):
+                print(f"[{name}] Cookie 已失效")
+
+                # 尝试 OAuth 登录获取新 Cookie
+                if username and password:
+                    print(f"[{name}] 尝试 OAuth 登录获取新 Cookie...")
+                    success, new_cookie = oauth_login(username, password)
+                    if success:
+                        cookie = new_cookie
+                        print(f"[{name}] 已获取新 Cookie，请更新 ugreen_cookie 环境变量")
+                    else:
+                        msg = "Cookie 失效且 OAuth 登录失败"
+                        print(f"[{name}] {msg}")
+                        return msg
+                else:
+                    msg = "Cookie 失效且未配置用户名密码"
+                    print(f"[{name}] {msg}")
+                    return msg
+            else:
+                print(f"[{name}] Cookie 有效")
+        elif username and password:
+            # 没有 Cookie，直接使用 OAuth 登录
+            print(f"[{name}] 开始 OAuth 登录...")
+            success, cookie = oauth_login(username, password)
+            if not success:
+                msg = "OAuth 登录失败"
+                print(f"[{name}] {msg}")
+                return msg
+        else:
+            msg = "未配置 Cookie 或用户名密码"
             print(f"[{name}] {msg}")
             return msg
-
-        print(f"[{name}] 登录成功")
 
         # 2. 获取用户资料（访问即签到）
         time.sleep(2)
@@ -493,13 +577,6 @@ def main():
     print("绿联论坛（UGreen）青龙面板签到脚本")
     print("=" * 50)
 
-    # 检查依赖
-    try:
-        from Crypto.Cipher import AES
-    except ImportError:
-        print("\n⚠️  警告: 未安装 pycryptodome 库")
-        print("请先执行: pip3 install pycryptodome\n")
-
     # 获取账号列表
     accounts = get_env()
 
@@ -513,11 +590,17 @@ def main():
     results = []
     for i, account in enumerate(accounts, 1):
         print(f"\n{'='*50}")
-        print(f"开始处理第 {i}/{len(accounts)} 个账号: {account['username']}")
+        if account.get('cookie'):
+            print(f"开始处理第 {i}/{len(accounts)} 个账号 (Cookie模式)")
+        else:
+            print(f"开始处理第 {i}/{len(accounts)} 个账号: {account.get('username', '未知')}")
         print(f"{'='*50}")
 
-        result = sign_in(account['username'], account['password'])
-        results.append(f"账号{i}({account['username']}): {result}")
+        result = sign_in(account)
+        if account.get('cookie'):
+            results.append(f"账号{i}(Cookie): {result}")
+        else:
+            results.append(f"账号{i}({account.get('username', '未知')}): {result}")
 
         # 多账号之间延迟
         if i < len(accounts):
