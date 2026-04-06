@@ -166,10 +166,59 @@ def main():
 
         # 替换通知方法
         manager.send_task_notification = wrapped_notify
+        print("✓ 已添加自定义 webhook 通知")
         
         # 执行任务
         print("\n开始执行 SMZDM 任务...\n")
         manager.run()
+        
+        # 确保发送通知（兜底）
+        print("\n发送签到结果通知...")
+        duration = int(time.time() - start_time)
+        success_count = sum(1 for r in manager.account_results if r.get('success'))
+        fail_count = len(manager.account_results) - success_count
+        
+        lines = [
+            f"👥 账号: {len(manager.account_results)}个",
+            f"✅ 成功: {success_count}",
+            f"❌ 失败: {fail_count}",
+            f"⏱️ 耗时: {duration}秒",
+            ""
+        ]
+        
+        for i, result in enumerate(manager.account_results, 1):
+            name = result.get('account_name', f'账号{i}')
+            
+            if result.get('success'):
+                checkin = result.get('checkin', {})
+                continuous_days = checkin.get('continuous_days', 0)
+                
+                zhongce = result.get('zhongce', {})
+                zc_success = zhongce.get('success', 0)
+                zc_fail = zhongce.get('fail', 0)
+                
+                interactive = result.get('interactive', {})
+                it_success = interactive.get('success', 0)
+                it_fail = interactive.get('fail', 0)
+                
+                lines.append(f"✅ [{name}]")
+                if continuous_days > 0:
+                    lines.append(f"   📅 连续签到: {continuous_days}天")
+                
+                points = checkin.get('points', '-')
+                if points != '-':
+                    lines.append(f"   💰 当前积分: {points}")
+                
+                lines.append(f"   🎯 众测任务: ✅{zc_success} ⚠️{zc_fail}")
+                lines.append(f"   🎯 互动任务: ✅{it_success} ⚠️{it_fail}")
+            else:
+                error_msg = result.get('error', '未知错误')
+                lines.append(f"❌ [{name}]: {error_msg}")
+            
+            if i < len(manager.account_results):
+                lines.append("")
+        
+        send_webhook("✅ SMZDM签到完成", "\n".join(lines))
 
     except Exception as e:
         msg = f"❌ 执行失败: {str(e)}"
