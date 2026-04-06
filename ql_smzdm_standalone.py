@@ -34,6 +34,43 @@ def get_accounts():
     return [{'cookie': c} for c in cookies if c]
 
 
+def check_network():
+    """检查网络连接"""
+    print("\n【网络检测】")
+    test_urls = [
+        'https://user-api.smzdm.com',
+        'https://try-api.smzdm.com',
+        'https://home-api.smzdm.com',
+    ]
+    
+    all_ok = True
+    for url in test_urls:
+        try:
+            resp = requests.get(url, timeout=5)
+            print(f"✓ {url} - 正常")
+        except requests.exceptions.ConnectionError:
+            print(f"✗ {url} - 无法连接（DNS解析失败或网络不通）")
+            all_ok = False
+        except requests.exceptions.Timeout:
+            print(f"✗ {url} - 超时")
+            all_ok = False
+        except Exception as e:
+            print(f"⚠ {url} - {str(e)}")
+    
+    if not all_ok:
+        print("\n⚠️  检测到网络连接问题，可能是：")
+        print("   1. 青龙容器 DNS 配置问题")
+        print("   2. 网络防火墙限制")
+        print("   3. SMZDM API 暂时不可用")
+        print("\n建议：")
+        print("   - 检查青龙容器的 DNS 设置")
+        print("   - 尝试在容器中 ping user-api.smzdm.com")
+        print("   - 稍后再试\n")
+    
+    print("=" * 60)
+    return all_ok
+
+
 def send_webhook(title, content):
     """发送 webhook 通知"""
     url = os.environ.get('CUSTOM_WEBHOOK_URL', '') or os.environ.get('NOTIFY_WEBHOOK', '')
@@ -71,11 +108,22 @@ def sign_in(cookie):
 
     result = []
     try:
-        # 签到
-        resp = requests.post('https://user-api.smzdm.com/checkin',
-                            headers=headers,
-                            params={'touchstone_event': '', 'sk': '1'},
-                            timeout=15)
+        # 签到（带重试）
+        resp = None
+        for attempt in range(3):
+            try:
+                resp = requests.post('https://user-api.smzdm.com/checkin',
+                                    headers=headers,
+                                    params={'touchstone_event': '', 'sk': '1'},
+                                    timeout=15)
+                break
+            except requests.exceptions.ConnectionError as e:
+                if attempt < 2:
+                    print(f"[{name}] 网络连接失败，第 {attempt + 1} 次重试...")
+                    time.sleep(3)
+                else:
+                    raise e
+        
         data = resp.json()
 
         if data.get('error_code') == 0:
@@ -295,6 +343,13 @@ def main():
     print("什么值得买（SMZDM）独立签到脚本 - 完整版")
     print(f"执行时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 60)
+
+    # 网络检测
+    network_ok = check_network()
+    if not network_ok:
+        print("\n⚠️  网络检测未通过，建议先解决网络问题")
+        send_webhook("⚠️ SMZDM网络异常", "检测到网络连接问题，请检查青龙容器的DNS配置或防火墙设置")
+        return
 
     accounts = get_accounts()
     if not accounts:
