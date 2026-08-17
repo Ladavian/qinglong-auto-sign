@@ -58,15 +58,15 @@ pip install requests pillow
 
 ### 青龙面板（推荐）
 
-**青龙面板 → 定时任务 → 添加任务**（脚本自带青龙 Env 头，直接运行即可）：
+订阅本仓库（白名单 `ql_`）后，`ql_smzdm.py` 会自动出现在任务列表中，直接运行即可：
 
-```
-名称: 什么值得买签到
-命令: python3 /ql/scripts/Ladavian_qinglong-auto-sign_main/script/smzdm/sign_daily_task/main.py
-定时规则: 0 8 * * *
+```bash
+# 定时任务
+task ql_smzdm.py
+# 建议时间: 0 8 * * *
 ```
 
-> 💡 青龙拉取仓库目录若不带 `_main` 后缀，把命令中的 `Ladavian_qinglong-auto-sign_main` 改为 `Ladavian_qinglong-auto-sign`（可在 `/ql/scripts/` 下确认实际目录名）。
+`ql_smzdm.py` 是入口启动器，通过 `os.path.realpath` 定位仓库真实目录后调用本模块。
 
 ### 本地运行
 
