@@ -19,7 +19,7 @@
 
 | 站点 | 脚本 | 功能 | 依赖 |
 |------|------|------|------|
-| **什么值得买** | `ql_smzdm.py` | 签到 + 众测 + 互动 + 能量值系统（已内置，自包含 ✅） | 无需外部仓库 |
+| **什么值得买** | `script/smzdm/sign_daily_task/main.py` | 签到 + 众测 + 互动 + 能量值系统（已内置，自包含 ✅） | 无需外部仓库 |
 | **WPS** | `ql_wps.py` | 任务中心 + 天天领福利（完整版） | 需订阅 [ZaiZaiCat-Checkin](https://github.com/Cat-zaizai/ZaiZaiCat-Checkin) |
 
 > 💡 **说明**: 什么值得买完整功能模块已随本仓库提供（`script/smzdm/`），订阅本仓库即可使用，无需再订阅外部仓库；WPS 完整版仍需订阅 ZaiZaiCat-Checkin
@@ -100,13 +100,19 @@ SMZDM 完整功能模块已随本仓库提供（`script/smzdm/`），无需订�
 }
 ```
 
-```bash
-# 定时任务
-python3 /ql/scripts/Ladavian_qinglong-auto-sign/ql_smzdm.py
-# 建议时间: 0 8 * * *
+**青龙面板 → 定时任务 → 添加任务**（脚本自带青龙 Env 头）：
+
+```
+名称: 什么值得买签到
+命令: python3 /ql/scripts/Ladavian_qinglong-auto-sign_main/script/smzdm/sign_daily_task/main.py
+定时规则: 0 8 * * *
 ```
 
+> 💡 若青龙订阅拉取的仓库目录名不带 `_main` 后缀，将命令中的 `Ladavian_qinglong-auto-sign_main` 改为 `Ladavian_qinglong-auto-sign` 即可（可在青龙文件管理 `/ql/scripts/` 下确认实际目录名）。
+
 完整功能包括：每日签到、众测任务、互动任务、能量值系统、奖励领取等。
+
+**通知**：SMZDM 完整版使用 `config/notification.json` 推送（支持企业微信/钉钉/飞书/Server酱/Bark 等），模板见 `config/template_notification.json`，配置后放入仓库根目录 `config/notification.json` 即可生效。
 
 ---
 
@@ -264,8 +270,6 @@ A: 青龙面板中手动运行一次任务，查看日志输出。
 qinglong-auto-sign/
 ├── ql_smzdm_standalone.py    # 什么值得买（独立基础版）
 ├── ql_wps_standalone.py      # WPS（独立完整版）
-├── ql_smzdm.py               # 什么值得买（完整功能版，已内置自包含）
-├── ql_wps.py                 # WPS（完整功能版，需外部仓库）
 ├── ql_pcbeta.py              # 远景论坛
 ├── ql_ugreen.py              # 绿联论坛
 ├── ql_enshan.py              # 恩山论坛
@@ -273,7 +277,7 @@ qinglong-auto-sign/
 ├── script/
 │   └── smzdm/                # 什么值得买完整功能模块（自包含）
 │       ├── api/              # API 封装 + 签名计算
-│       └── sign_daily_task/  # 任务管理器（main.py / service.py）
+│       └── sign_daily_task/  # 任务入口（main.py）+ 服务层（service.py）
 ├── config/
 │   ├── template_token.json   # 账号配置模板（复制为 token.json 使用）
 │   └── template_notification.json

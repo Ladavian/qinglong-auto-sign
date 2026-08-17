@@ -2,7 +2,7 @@
 
 ## 重要说明
 
-什么值得买（SMZDM）完整功能已内置到本仓库（`script/smzdm/`），直接运行 `ql_smzdm.py` 即可，**无需再订阅外部仓库**，配置方法见 [README.md](README.md#什么值得买-smzdm)。
+什么值得买（SMZDM）完整功能已内置到本仓库（`script/smzdm/`），直接运行 `script/smzdm/sign_daily_task/main.py` 即可，**无需再订阅外部仓库**，配置方法见 [README.md](README.md#什么值得买-smzdm)。
 
 本文档仅适用于 **WPS**：原脚本功能复杂、包含多个模块和依赖，继续使用 ZaiZaiCat-Checkin 仓库的完整功能，通过包装脚本添加 webhook 通知。
 
