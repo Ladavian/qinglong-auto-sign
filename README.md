@@ -26,7 +26,24 @@
 
 ## 快速部署
 
-### 方式一：订阅管理（推荐）
+### 方式一：daidai-panel（呆呆面板）
+
+面板 → 订阅管理 → 添加订阅：
+
+```
+链接: https://github.com/Ladavian/qinglong-auto-sign.git
+保存目录: qinglong-auto-sign
+白名单: ql_
+依赖规则: script/smzdm, notification.py, config
+定时同步: 0 0 * * *
+```
+
+- 白名单 `ql_`：匹配 `ql_` 开头的文件建成定时任务（如 `ql_smzdm.py`）
+- 依赖规则：`script/smzdm`（API/任务模块）、`notification.py`（通知模块）、`config`（配置模板）会被拉取到脚本目录供主脚本调用，但**不会**建成任务（匹配为子串包含，`,` 或 `|` 均可分隔）
+
+SMZDM 任务的命令为 `python ql_smzdm.py`，账号用面板「环境变量」配置（见下文），通知走面板内置的 18 种渠道，任务运行时自动生效。
+
+### 方式二：青龙订阅管理
 
 青龙面板 → 订阅管理 → 添加订阅：
 
@@ -39,7 +56,7 @@
 
 保存后点击运行即可。
 
-### 方式二：定时拉取
+### 方式三：青龙定时拉取
 
 青龙面板 → 定时任务 → 添加任务：
 
@@ -83,7 +100,16 @@ python3 /ql/scripts/Ladavian_qinglong-auto-sign/ql_smzdm_standalone.py
 
 SMZDM 完整功能模块已随本仓库提供（`script/smzdm/`），无需订阅外部仓库。
 
-在仓库根目录创建 `config/token.json`（参考 `config/template_token.json`）：
+**配置账号（二选一）：**
+
+方式 A：面板「环境变量」（daidai-panel / 青龙通用，推荐）：
+
+```
+smzdm_cookie=cookie1&cookie2&cookie3     # 多账号用 &、@ 或换行分隔
+SMZDM_USER_AGENT=Mozilla/5.0 (iPhone; CPU iPhone OS 15_8_3 like Mac OS X) ...
+```
+
+方式 B：仓库根目录创建 `config/token.json`（参考 `config/template_token.json`）：
 
 ```json
 {

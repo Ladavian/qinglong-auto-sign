@@ -344,6 +344,12 @@ class NotificationManager:
             url (Optional[str]): 跳转链接 (Bark专用)
             timeout (int): 请求超时时间
         """
+        # daidai-panel 兼容：面板注入的通知接口优先（渠道由面板统一管理）
+        daidai_url = os.environ.get('DAIDAI_NOTIFY_URL', '').strip()
+        if daidai_url:
+            self.send_daidai_notification(title, content, daidai_url, timeout)
+            return
+
         if self.is_bark_enabled():
             self.send_bark_notification(title, content, timeout, level, sound, group, url)
         if self.is_server_enabled():
@@ -826,6 +832,28 @@ class NotificationManager:
                 return False
         except Exception as e:
             self.logger.error(f"❌ PushDeer 推送异常: {e}")
+            return False
+
+    def send_daidai_notification(self, title: str, content: str, notify_url: str, timeout: int = 10) -> bool:
+        """发送 daidai-panel 面板通知（使用面板注入的 DAIDAI_NOTIFY_URL / DAIDAI_NOTIFY_TOKEN）"""
+        token = os.environ.get('DAIDAI_NOTIFY_TOKEN', '').strip()
+        try:
+            self.logger.info(f"正在发送 daidai-panel 面板通知: {notify_url}")
+            headers = {'Content-Type': 'application/json'}
+            if token:
+                headers['Authorization'] = f'Bearer {token}'
+            response = requests.post(
+                notify_url, json={"title": title, "content": content},
+                headers=headers, timeout=timeout
+            )
+            if response.status_code == 200:
+                self.logger.info("✅ daidai-panel 面板通知发送成功")
+                return True
+            else:
+                self.logger.error(f"❌ daidai-panel 面板通知发送失败: HTTP {response.status_code} {response.text[:200]}")
+                return False
+        except Exception as e:
+            self.logger.error(f"❌ daidai-panel 面板通知发送异常: {e}")
             return False
 
     def send_custom_webhook_notification(self, title: str, content: str, timeout: int = 10) -> bool:

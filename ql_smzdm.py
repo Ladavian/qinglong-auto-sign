@@ -1,16 +1,20 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-什么值得买（SMZDM）青龙面板任务入口
+什么值得买（SMZDM）定时任务入口（daidai-panel / 青龙通用）
 
-青龙面板（订阅管理 / ql repo）只把文件名匹配白名单 ql_ 的脚本创建为任务，
-本文件即为此入口：通过 os.path.realpath 定位本仓库真实目录（兼容青龙将脚本
-软链到 /ql/scripts/ 的执行方式），然后调用内置的完整功能模块
+daidai-panel（呆呆面板）与青龙的订阅管理都只把文件名匹配白名单（如 ql_）的
+文件建成定时任务，本文件即为此入口：通过 os.path.realpath 定位本仓库真实目录
+（兼容软链执行方式），然后调用内置的完整功能模块
 script/smzdm/sign_daily_task/main.py（该模块本身零改动）。
 
-配置：
-- 账号: 仓库根目录 config/token.json（参考 config/template_token.json）
-- 通知: 环境变量 CUSTOM_WEBHOOK_URL 或 config/notification.json
+配置（二选一，推荐环境变量）：
+- 环境变量: smzdm_cookie（多账号用 &、@ 或换行分隔）+ SMZDM_USER_AGENT
+- 配置文件: 仓库根目录 config/token.json（参考 config/template_token.json）
+
+通知（二选一）：
+- daidai-panel: 面板内置 18 种通知渠道，任务运行时自动生效（无需额外配置）
+- 环境变量 CUSTOM_WEBHOOK_URL 或 config/notification.json（青龙等环境）
 """
 import os
 import sys

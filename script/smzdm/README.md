@@ -56,15 +56,22 @@ pip install requests pillow
 
 ## 🚀 使用方法
 
-### 青龙面板（推荐）
+### daidai-panel / 青龙面板（推荐）
 
-订阅本仓库（白名单 `ql_`）后，`ql_smzdm.py` 会自动出现在任务列表中，直接运行即可：
+订阅本仓库后，`ql_smzdm.py` 会自动出现在任务列表中，直接运行即可：
+
+**daidai-panel（呆呆面板）：** 订阅管理的白名单填 `ql_`，依赖规则填 `script/smzdm, notification.py, config`（模块被拉取但不建任务）。任务命令 `python ql_smzdm.py`。
+
+**青龙面板：** 白名单 `ql_` 即可，任务命令 `task ql_smzdm.py`。
 
 ```bash
-# 定时任务
-task ql_smzdm.py
-# 建议时间: 0 8 * * *
+# 定时规则（两者通用）
+0 8 * * *
 ```
+
+**账号配置（二选一）：**
+- 环境变量：`smzdm_cookie`（多账号用 `&`、`@` 或换行分隔）+ `SMZDM_USER_AGENT`（推荐）
+- 配置文件：仓库根目录 `config/token.json`（参考 `config/template_token.json`）
 
 `ql_smzdm.py` 是入口启动器，通过 `os.path.realpath` 定位仓库真实目录后调用本模块。
 

@@ -99,8 +99,29 @@ class SmzdmTaskManager:
         self.load_config()
 
     def load_config(self):
-        """加载配置文件"""
+        """加载配置（优先级: 环境变量 smzdm_cookie > config/token.json 文件）"""
         try:
+            # daidai-panel / 青龙兼容：支持环境变量配置，多账号用 &、@ 或换行分隔
+            cookie_env = os.environ.get('smzdm_cookie', '').strip()
+            if cookie_env:
+                import re
+                accounts = []
+                for index, cookie in enumerate(re.split(r'[&\n@]', cookie_env), 1):
+                    cookie = cookie.strip()
+                    if cookie:
+                        accounts.append({
+                            'name': f'账号{index}',
+                            'cookie': cookie,
+                            'user_agent': os.environ.get('SMZDM_USER_AGENT', ''),
+                            'setting': os.environ.get('SMZDM_SETTING', ''),
+                        })
+                self.accounts = accounts
+                if not self.accounts:
+                    logger.warning("环境变量 smzdm_cookie 中没有有效的账号信息")
+                else:
+                    logger.info(f"✅ 从环境变量 smzdm_cookie 加载 {len(self.accounts)} 个账号\n")
+                return
+
             logger.info(f"正在读取配置文件: {self.config_path}")
 
             if not self.config_path.exists():
