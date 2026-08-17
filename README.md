@@ -106,8 +106,10 @@ SMZDM 完整功能模块已随本仓库提供（`script/smzdm/`），无需订�
 
 ```
 smzdm_cookie=cookie1&cookie2&cookie3     # 多账号用 &、@ 或换行分隔
-SMZDM_USER_AGENT=Mozilla/5.0 (iPhone; CPU iPhone OS 15_8_3 like Mac OS X) ...
+SMZDM_USER_AGENT=Mozilla/5.0 (iPhone; CPU iPhone OS 15_8_3 like Mac OS X) ...   # 手机 App 抓包得到的 UA，勿用 PC 浏览器 UA
 ```
+
+> 💡 `SMZDM_USER_AGENT` 必须填**手机（iPhone）App** 请求的 User-Agent（与 `smzdm_cookie` 同一抓包会话），脚本的签名与风控按 App 环境设计，PC 浏览器 UA 会导致请求被拒。
 
 方式 B：仓库根目录创建 `config/token.json`（参考 `config/template_token.json`）：
 
