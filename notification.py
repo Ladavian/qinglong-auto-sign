@@ -118,6 +118,7 @@ class NotificationManager:
         self.gotify_config = self._load_gotify_config()
         self.ntfy_config = self._load_ntfy_config()
         self.pushdeer_config = self._load_pushdeer_config()
+        self.custom_webhook_config = self._load_custom_webhook_config()
 
     def _load_config_from_file(self) -> Dict:
         """从JSON文件中加载配置"""
@@ -258,6 +259,15 @@ class NotificationManager:
             'type': self._get_config_value('pushdeer', 'type', 'PUSHDEER_TYPE', 'text'),
         }
 
+    def _load_custom_webhook_config(self) -> Dict[str, str]:
+        """加载自定义Webhook配置（优先级: 文件 > CUSTOM_WEBHOOK_URL > NOTIFY_WEBHOOK）"""
+        return {
+            'url': (
+                self._get_config_value('custom_webhook', 'url', 'CUSTOM_WEBHOOK_URL', '')
+                or self._get_config_value('custom_webhook', 'url', 'NOTIFY_WEBHOOK', '')
+            ),
+        }
+
     def is_bark_enabled(self) -> bool:
         """检查Bark推送是否已启用"""
         return bool(self.bark_config.get('push'))
@@ -315,6 +325,10 @@ class NotificationManager:
         """检查PushDeer推送是否已启用"""
         return bool(self.pushdeer_config.get('pushkey'))
 
+    def is_custom_webhook_enabled(self) -> bool:
+        """检查自定义Webhook推送是否已启用"""
+        return bool(self.custom_webhook_config.get('url'))
+
     def send(self, title: str, content: str, level: Optional[str] = None,
              sound: Optional[str] = None, group: Optional[str] = None,
              url: Optional[str] = None, timeout: int = 10):
@@ -356,6 +370,8 @@ class NotificationManager:
             self.send_gotify_notification(title, content, timeout)
         if self.is_ntfy_enabled():
             self.send_ntfy_notification(title, content, timeout)
+        if self.is_custom_webhook_enabled():
+            self.send_custom_webhook_notification(title, content, timeout)
 
     def send_server_notification(self, title: str, content: str, timeout: int = 10) -> bool:
         """发送Server酱推送"""
@@ -812,6 +828,32 @@ class NotificationManager:
             self.logger.error(f"❌ PushDeer 推送异常: {e}")
             return False
 
+    def send_custom_webhook_notification(self, title: str, content: str, timeout: int = 10) -> bool:
+        """发送自定义Webhook推送（通用 JSON POST，兼容 CUSTOM_WEBHOOK_URL）"""
+        url = self.custom_webhook_config.get('url')
+        if not url:
+            self.logger.warning("自定义Webhook推送未启用")
+            return False
+
+        payload = {"title": title, "content": content, "timestamp": int(time.time())}
+
+        try:
+            self.logger.info(f"正在发送自定义Webhook推送: {url[:40]}...")
+            response = requests.post(
+                url, json=payload,
+                headers={"Content-Type": "application/json"},
+                timeout=timeout
+            )
+            if response.status_code == 200:
+                self.logger.info("✅ 自定义Webhook推送成功")
+                return True
+            else:
+                self.logger.error(f"❌ 自定义Webhook推送失败: HTTP {response.status_code} {response.text[:200]}")
+                return False
+        except Exception as e:
+            self.logger.error(f"❌ 自定义Webhook推送异常: {e}")
+            return False
+
 
 # 创建全局通知管理器实例
 notification_manager = NotificationManager()
@@ -859,6 +901,7 @@ if __name__ == "__main__":
         notification_manager.is_gotify_enabled(),
         notification_manager.is_ntfy_enabled(),
         notification_manager.is_pushdeer_enabled(),
+        notification_manager.is_custom_webhook_enabled(),
     ]):
         print("❌ 未配置任何推送方式，请检查环境变量")
         sys.exit(1)

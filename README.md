@@ -112,7 +112,9 @@ SMZDM 完整功能模块已随本仓库提供（`script/smzdm/`），无需订�
 
 完整功能包括：每日签到、众测任务、互动任务、能量值系统、奖励领取等。
 
-**通知**：SMZDM 完整版使用 `config/notification.json` 推送（支持企业微信/钉钉/飞书/Server酱/Bark 等），模板见 `config/template_notification.json`，配置后放入仓库根目录 `config/notification.json` 即可生效。
+**通知**：SMZDM 完整版支持两种方式：
+1. 设置环境变量 `CUSTOM_WEBHOOK_URL`（通用 JSON POST，兼容任意通知服务，格式见下方"Webhook 通知"）；
+2. 使用 `config/notification.json` 推送（支持企业微信/钉钉/飞书/Server酱/Bark 等，模板见 `config/template_notification.json`）。
 
 ---
 

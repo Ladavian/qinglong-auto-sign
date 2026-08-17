@@ -61,5 +61,8 @@
     "url": "https://ntfy.sh",
     "topic": "",
     "priority": "3"
+  },
+  "custom_webhook": {
+    "url": ""
   }
 }
