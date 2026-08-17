@@ -1,6 +1,6 @@
 # 青龙面板自动签到脚本
 
-完全独立的青龙面板签到脚本，支持独立运行和配合外部仓库两种模式。
+完全独立的青龙面板签到脚本，支持基础版和完整功能版两种模式。
 
 ## 支持站点
 
@@ -15,13 +15,13 @@
 | **远景论坛** | `ql_pcbeta.py` | 论坛签到 |
 | **绿联论坛** | `ql_ugreen.py` | 论坛签到（Cookie/OAuth） |
 
-### 完整功能版（需订阅外部仓库）
-需要订阅 [ZaiZaiCat-Checkin](https://github.com/Cat-zaizai/ZaiZaiCat-Checkin) 仓库：
+### 完整功能版
+完整功能已内置，无需再订阅外部仓库：
 
 | 站点 | 脚本 | 功能 |
 |------|------|------|
 | **什么值得买** | `ql_smzdm.py` | 签到 + 众测 + 互动 + 能量值系统 |
-| **WPS** | `ql_wps.py` | 任务中心 + 天天领福利（完整版） |
+| **WPS** | `ql_wps.py` | 任务中心 + 天天领福利（需外部仓库） |
 
 > 💡 **说明**: 独立脚本适合简单使用，完整功能版适合需要全部特性的用户
 
@@ -35,7 +35,7 @@
 名称: qinglong-auto-sign
 链接: https://github.com/Ladavian/qinglong-auto-sign.git
 白名单: ql_
-执行前命令: pip3 install requests pycryptodome
+执行前命令: pip3 install -r requirements.txt
 ```
 
 保存后点击运行即可。
@@ -80,20 +80,22 @@ python3 /ql/scripts/Ladavian_qinglong-auto-sign/ql_smzdm_standalone.py
 2. F12 → Network → 刷新页面
 3. 复制请求头中的 Cookie 值
 
-**方式二：完整功能版（需外部仓库）**
+**方式二：完整功能版（已内置）**
 
-需要先订阅 ZaiZaiCat-Checkin 仓库，然后在 `config/token.json` 中配置账号。
+复制 `config/smzdm_token.example.json` 为 `config/smzdm_token.json`，填入账号信息；该配置文件已被 Git 忽略，不会提交 Cookie。
+
+每个账号需要 `name`、`cookie`、`user_agent` 和 `setting` 字段；后两项不需要时可保留为空字符串。
 
 ```bash
-# 环境变量
-smzdm_config_path=/ql/scripts/Cat-zaizai_ZaiZaiCat-Checkin/config/token.json
+# 可选：将配置放在其他位置
+SMZDM_CONFIG_PATH=/ql/data/config/smzdm_token.json
 
 # 定时任务
 python3 /ql/scripts/Ladavian_qinglong-auto-sign/ql_smzdm.py
 # 建议时间: 0 8 * * *
 ```
 
-完整功能包括：每日签到、众测任务、互动任务、能量值系统、奖励领取等。
+完整功能包括：每日签到、众测任务、互动任务、能量值系统、奖励领取等。核心模块位于 `smzdm/`，`ql_smzdm.py` 是青龙的执行入口。
 
 ---
 
