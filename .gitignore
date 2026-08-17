@@ -10,6 +10,7 @@ ENV/
 
 # 日志文件
 *.log
+config/smzdm_token.json
 
 # IDE
 .vscode/

@@ -1,0 +1,12 @@
+{
+  "smzdm": {
+    "accounts": [
+      {
+        "name": "账号 1",
+        "cookie": "在这里填写什么值得买 Cookie",
+        "user_agent": "",
+        "setting": ""
+      }
+    ]
+  }
+}
