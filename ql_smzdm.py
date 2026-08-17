@@ -4,13 +4,13 @@
 什么值得买（SMZDM）青龙面板签到脚本 - 完整版
 支持每日签到、众测任务、互动任务、能量值系统
 
-此脚本通过调用 ZaiZaiCat-Checkin 的完整功能，并添加自定义 webhook 通知
+完整功能模块已内置在本仓库 script/smzdm/ 目录，自包含运行，不再依赖外部仓库。
+旧环境（青龙上仍订阅了 ZaiZaiCat-Checkin）会自动回退到外部仓库路径。
 
 环境变量配置：
-export smzdm_config_path="/ql/scripts/Cat-zaizai_ZaiZaiCat-Checkin/config/token.json"
 export CUSTOM_WEBHOOK_URL="https://your-webhook-url.com/api/notify"  # 可选
 
-注意：需要先订阅 ZaiZaiCat-Checkin 仓库并在 config/token.json 中配置账号
+注意：账号配置在仓库根目录的 config/token.json（参考 config/template_token.json）
 """
 import os
 import sys
@@ -54,32 +54,46 @@ def main():
     print("什么值得买（SMZDM）签到 - 完整版")
     print("=" * 60)
 
-    # 添加原仓库路径到 Python 路径（支持多种路径和命名）
+    # 添加仓库路径到 Python 路径（优先使用本仓库内置模块，回退到外部 ZaiZaiCat-Checkin）
+    # 脚本所在目录即本仓库根目录
+    local_dir = os.path.dirname(os.path.abspath(__file__))
     repo_paths = [
+        local_dir,
+        '/ql/scripts/Ladavian_qinglong-auto-sign',
+        '/ql/scripts/Ladavian_qinglong-auto-sign_main',
+        '/ql/data/scripts/Ladavian_qinglong-auto-sign',
+        '/ql/data/scripts/Ladavian_qinglong-auto-sign_main',
+        # 旧环境回退：外部 ZaiZaiCat-Checkin 仓库
         '/ql/scripts/Cat-zaizai_ZaiZaiCat-Checkin',
         '/ql/scripts/Cat-zaizai_ZaiZaiCat-Checkin_main',
         '/ql/data/scripts/Cat-zaizai_ZaiZaiCat-Checkin',
         '/ql/data/scripts/Cat-zaizai_ZaiZaiCat-Checkin_main',
     ]
-    
+
+    def has_smzdm_module(path):
+        """校验仓库根目录下是否包含内置 SMZDM 模块"""
+        return os.path.exists(os.path.join(path, 'script', 'smzdm', 'sign_daily_task', 'main.py'))
+
     repo_path = None
     for path in repo_paths:
-        if os.path.exists(path):
+        if has_smzdm_module(path):
             repo_path = path
             break
-    
+
     if not repo_path:
-        # 尝试动态查找
+        # 尝试动态查找（兼容青龙不同的仓库命名）
         import glob
-        matches = glob.glob('/ql/*/scripts/*ZaiZaiCat*')
-        if matches:
-            repo_path = matches[0]
-            print(f"✓ 自动找到仓库路径: {repo_path}")
-        else:
-            msg = "❌ 未找到 ZaiZaiCat-Checkin 仓库\n\n请先订阅仓库：\nhttps://github.com/Cat-zaizai/ZaiZaiCat-Checkin.git"
-            print(msg)
-            send_webhook("❌ SMZDM配置错误", msg)
-            return
+        for match in glob.glob('/ql/*/scripts/*'):
+            if has_smzdm_module(match):
+                repo_path = match
+                print(f"✓ 自动找到仓库路径: {repo_path}")
+                break
+
+    if not repo_path:
+        msg = "❌ 未找到内置 SMZDM 模块（script/smzdm/）\n\n请确认已订阅本仓库：\nhttps://github.com/Ladavian/qinglong-auto-sign.git"
+        print(msg)
+        send_webhook("❌ SMZDM配置错误", msg)
+        return
     
     if repo_path not in sys.path:
         sys.path.insert(0, repo_path)
@@ -112,7 +126,7 @@ def main():
     start_time = time.time()
     
     try:
-        # 导入原仓库的 SMZDM 模块
+        # 导入仓库内置的 SMZDM 模块（ql_smzdm.py 与本模块位于同一仓库）
         from script.smzdm.sign_daily_task.main import SmzdmTaskManager
         
         manager = SmzdmTaskManager()

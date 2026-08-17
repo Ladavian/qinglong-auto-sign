@@ -15,15 +15,14 @@
 | **远景论坛** | `ql_pcbeta.py` | 论坛签到 |
 | **绿联论坛** | `ql_ugreen.py` | 论坛签到（Cookie/OAuth） |
 
-### 完整功能版（需订阅外部仓库）
-需要订阅 [ZaiZaiCat-Checkin](https://github.com/Cat-zaizai/ZaiZaiCat-Checkin) 仓库：
+### 完整功能版
 
-| 站点 | 脚本 | 功能 |
-|------|------|------|
-| **什么值得买** | `ql_smzdm.py` | 签到 + 众测 + 互动 + 能量值系统 |
-| **WPS** | `ql_wps.py` | 任务中心 + 天天领福利（完整版） |
+| 站点 | 脚本 | 功能 | 依赖 |
+|------|------|------|------|
+| **什么值得买** | `ql_smzdm.py` | 签到 + 众测 + 互动 + 能量值系统（已内置，自包含 ✅） | 无需外部仓库 |
+| **WPS** | `ql_wps.py` | 任务中心 + 天天领福利（完整版） | 需订阅 [ZaiZaiCat-Checkin](https://github.com/Cat-zaizai/ZaiZaiCat-Checkin) |
 
-> 💡 **说明**: 独立脚本适合简单使用，完整功能版适合需要全部特性的用户
+> 💡 **说明**: 什么值得买完整功能模块已随本仓库提供（`script/smzdm/`），订阅本仓库即可使用，无需再订阅外部仓库；WPS 完整版仍需订阅 ZaiZaiCat-Checkin
 
 ## 快速部署
 
@@ -35,7 +34,7 @@
 名称: qinglong-auto-sign
 链接: https://github.com/Ladavian/qinglong-auto-sign.git
 白名单: ql_
-执行前命令: pip3 install requests pycryptodome
+执行前命令: pip3 install requests pycryptodome pillow
 ```
 
 保存后点击运行即可。
@@ -80,14 +79,28 @@ python3 /ql/scripts/Ladavian_qinglong-auto-sign/ql_smzdm_standalone.py
 2. F12 → Network → 刷新页面
 3. 复制请求头中的 Cookie 值
 
-**方式二：完整功能版（需外部仓库）**
+**方式二：完整功能版（推荐，已内置）**
 
-需要先订阅 ZaiZaiCat-Checkin 仓库，然后在 `config/token.json` 中配置账号。
+SMZDM 完整功能模块已随本仓库提供（`script/smzdm/`），无需订阅外部仓库。
+
+在仓库根目录创建 `config/token.json`（参考 `config/template_token.json`）：
+
+```json
+{
+  "smzdm": {
+    "accounts": [
+      {
+        "name": "账号1",
+        "cookie": "你的Cookie",
+        "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_8_3 like Mac OS X)...",
+        "setting": ""
+      }
+    ]
+  }
+}
+```
 
 ```bash
-# 环境变量
-smzdm_config_path=/ql/scripts/Cat-zaizai_ZaiZaiCat-Checkin/config/token.json
-
 # 定时任务
 python3 /ql/scripts/Ladavian_qinglong-auto-sign/ql_smzdm.py
 # 建议时间: 0 8 * * *
@@ -226,10 +239,10 @@ enshan_password=pass1&pass2&pass3
 首次使用需要安装依赖：
 
 ```bash
-pip3 install requests pycryptodome
+pip3 install requests pycryptodome pillow
 ```
 
-> **注意**：绿联论坛需要 `pycryptodome` 库用于加密
+> **注意**：绿联论坛需要 `pycryptodome` 库用于加密；什么值得买完整版需要 `pillow` 库（图片验证码处理）
 
 ## 常见问题
 
@@ -251,11 +264,19 @@ A: 青龙面板中手动运行一次任务，查看日志输出。
 qinglong-auto-sign/
 ├── ql_smzdm_standalone.py    # 什么值得买（独立基础版）
 ├── ql_wps_standalone.py      # WPS（独立完整版）
-├── ql_smzdm.py               # 什么值得买（完整功能版，需外部仓库）
+├── ql_smzdm.py               # 什么值得买（完整功能版，已内置自包含）
 ├── ql_wps.py                 # WPS（完整功能版，需外部仓库）
 ├── ql_pcbeta.py              # 远景论坛
 ├── ql_ugreen.py              # 绿联论坛
 ├── ql_enshan.py              # 恩山论坛
+├── notification.py           # 通知模块（SMZDM 完整版依赖）
+├── script/
+│   └── smzdm/                # 什么值得买完整功能模块（自包含）
+│       ├── api/              # API 封装 + 签名计算
+│       └── sign_daily_task/  # 任务管理器（main.py / service.py）
+├── config/
+│   ├── template_token.json   # 账号配置模板（复制为 token.json 使用）
+│   └── template_notification.json
 ├── requirements.txt          # Python依赖
 └── README.md                 # 说明文档
 ```

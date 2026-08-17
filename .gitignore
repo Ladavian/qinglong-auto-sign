@@ -11,6 +11,11 @@ ENV/
 # 日志文件
 *.log
 
+# 本地配置文件（含 Cookie，切勿提交）
+config/token.json
+config/notification.json
+config/*.secret.json
+
 # IDE
 .vscode/
 .idea/

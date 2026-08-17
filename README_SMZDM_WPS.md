@@ -1,10 +1,10 @@
-# 什么值得买和 WPS 完整功能配置指南
+# WPS 完整功能配置指南
 
 ## 重要说明
 
-由于什么值得买（SMZDM）和 WPS 的原脚本功能非常复杂，包含多个模块和依赖，直接移植会很困难。
+什么值得买（SMZDM）完整功能已内置到本仓库（`script/smzdm/`），直接运行 `ql_smzdm.py` 即可，**无需再订阅外部仓库**，配置方法见 [README.md](README.md#什么值得买-smzdm)。
 
-**推荐方案**：继续使用 ZaiZaiCat-Checkin 仓库的完整功能，通过包装脚本添加 webhook 通知。
+本文档仅适用于 **WPS**：原脚本功能复杂、包含多个模块和依赖，继续使用 ZaiZaiCat-Checkin 仓库的完整功能，通过包装脚本添加 webhook 通知。
 
 ---
 
@@ -21,22 +21,6 @@
 
 编辑 `/ql/scripts/Cat-zaizai_ZaiZaiCat-Checkin/config/token.json`：
 
-#### 什么值得买配置
-```json
-{
-  "smzdm": {
-    "accounts": [
-      {
-        "name": "账号1",
-        "cookie": "你的Cookie",
-        "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_8_3 like Mac OS X)...",
-        "setting": ""
-      }
-    ]
-  }
-}
-```
-
 #### WPS 配置
 ```json
 {
@@ -51,46 +35,7 @@
 }
 ```
 
-### 3. 创建包装脚本
-
-#### 什么值得买包装脚本 (`/ql/scripts/my_smzdm_full.py`)
-
-```python
-#!/usr/bin/env python3
-import sys
-sys.path.insert(0, '/ql/scripts')
-sys.path.insert(0, '/ql/scripts/Cat-zaizai_ZaiZaiCat-Checkin')
-
-from webhook_wrapper import send_webhook
-
-# 捕获输出并执行原脚本
-output_lines = []
-import builtins
-original_print = builtins.print
-
-def custom_print(*args, **kwargs):
-    text = ' '.join(str(a) for a in args)
-    output_lines.append(text)
-    original_print(*args, **kwargs)
-
-builtins.print = custom_print
-
-try:
-    from script.smzdm.sign_daily_task.main import main as smzdm_main
-    smzdm_main()
-
-    if output_lines:
-        content = '\n'.join(output_lines[-50:])  # 取最后50行
-        send_webhook("✅ 什么值得买签到完成", content)
-
-except Exception as e:
-    send_webhook("❌ 什么值得买签到失败", str(e))
-
-finally:
-    builtins.print = original_print
-```
-
-#### WPS 包装脚本 (`/ql/scripts/my_wps_full.py`)
+### 3. 创建 WPS 包装脚本 (`/ql/scripts/my_wps_full.py`)
 
 ```python
 #!/usr/bin/env python3
@@ -130,7 +75,6 @@ finally:
 
 | 名称 | 命令 | 定时规则 |
 |------|------|----------|
-| 什么值得买签到(完整版) | `python3 /ql/scripts/my_smzdm_full.py` | `0 8 * * *` |
 | WPS签到(完整版) | `python3 /ql/scripts/my_wps_full.py` | `0 9 * * *` |
 
 ### 5. 禁用原有任务
@@ -158,11 +102,6 @@ finally:
 ---
 
 ## Cookie 获取方法
-
-### 什么值得买
-1. 浏览器登录 https://www.smzdm.com/
-2. F12 → Network → 刷新页面
-3. 复制任意请求的 Cookie（包含 sess 字段）
 
 ### WPS
 1. 浏览器登录 https://www.wps.cn/
