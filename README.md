@@ -203,15 +203,28 @@ python3 /ql/scripts/Ladavian_qinglong-auto-sign/ql_enshan.py
 
 #### 远景论坛 (PCBeta)
 
+远景的签到是**回帖打卡任务**（申请任务 → 到打卡帖回复 → 领取 PB币），任务 id 与打卡帖每期变化，脚本会自动识别。
+
+**方式一：Cookie（推荐，绕开登录风控）**
+
 ```bash
-# 环境变量
-pcbeta_username=user1&user2
-pcbeta_password=pass1&pass2
+# 环境变量（浏览器登录 https://i.pcbeta.com 后，F12 → Application → Cookies 复制 jqCP_887f_auth 的值）
+pcbeta_cookie=jqCP_887f_auth=xxx&jqCP_887f_auth=yyy     # 多账号用 & 分隔
+pcbeta_reply_content=打卡签到                             # 可选，回帖内容（默认"打卡签到"）
 
 # 定时任务
 python3 /ql/scripts/Ladavian_qinglong-auto-sign/ql_pcbeta.py
 # 建议时间: 0 8 * * *
 ```
+
+**方式二：账号密码（备用）**
+
+```bash
+pcbeta_username=user1&user2
+pcbeta_password=pass1&pass2
+```
+
+> 💡 远景登录有失败次数限制，连续失败会临时封锁 IP；Cookie 有效期约一个月，失效时重新复制一次即可。
 
 ---
 
