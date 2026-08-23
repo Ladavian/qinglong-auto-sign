@@ -20,6 +20,9 @@ import time
 import json
 import requests
 
+# 远景论坛基础地址
+PC_BASE = "https://i.pcbeta.com"
+
 
 def get_env():
     """获取环境变量配置"""
@@ -101,6 +104,39 @@ def send_webhook_notify(title, content):
         return False
 
 
+def bypass_js_challenge(session):
+    """
+    绕过远景论坛 JS 挑战防护
+
+    远景对无会话的新访问会返回 JS 挑战页（需设置 access_js_verified 等 cookie 后重载），
+    未通过验证的会话在部分网络/IP 下会直接返回 403。
+    """
+    try:
+        resp = session.get(f"{PC_BASE}/", timeout=20)
+        if "access_js_verified" in resp.text:
+            session.cookies.set("access_js_verified", "1", domain="pcbeta.com", path="/")
+            session.cookies.set("access_js_platform", "MacIntel", domain="pcbeta.com", path="/")
+            resp = session.get(f"{PC_BASE}/", timeout=20)
+            if "access_js_verified" in resp.text:
+                print("[远景论坛] ⚠️ JS 挑战验证失败，仍被拦截")
+                return False
+        return True
+    except Exception as e:
+        print(f"[远景论坛] 访问论坛异常: {e}")
+        return False
+
+
+def get_formhash(session):
+    """获取登录页 formhash（Discuz 登录必需参数）"""
+    try:
+        resp = session.get(f"{PC_BASE}/member.php?mod=logging&action=login", timeout=20)
+        m = re.search(r'name="formhash" value="([a-f0-9]+)"', resp.text)
+        return m.group(1) if m else ""
+    except Exception as e:
+        print(f"[远景论坛] 获取登录页异常: {e}")
+        return ""
+
+
 def sign_in(username, password):
     """
     远景论坛签到
@@ -118,22 +154,59 @@ def sign_in(username, password):
     try:
         ua = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"
         session = requests.Session()
-        session.headers.update({"User-Agent": ua})
+        session.headers.update({
+            "User-Agent": ua,
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+        })
 
         print(f"[{name}] 开始登录...")
 
-        # 1. 登录
-        login_url = "https://i.pcbeta.com/member.php?mod=logging&action=login&loginsubmit=yes&inajax=1"
+        # 0. 绕过远景 JS 挑战防护（未通过验证的会话会被 403 拦截）
+        if not bypass_js_challenge(session):
+            msg = "访问论坛失败（网络异常或 IP 被临时限制），请稍后重试"
+            print(f"[{name}] {msg}")
+            return msg
+
+        # 1. 获取登录页 formhash（Discuz 登录必需参数）
+        formhash = get_formhash(session)
+        if not formhash:
+            msg = "获取登录参数失败，可能触发了验证码或风控，请稍后重试"
+            print(f"[{name}] {msg}")
+            return msg
+
+        # 2. 登录
+        login_url = f"{PC_BASE}/member.php?mod=logging&action=login&loginsubmit=yes&inajax=1"
         login_data = {
             "username": username,
-            "password": password
+            "password": password,
+            "formhash": formhash,
+            "questionid": "0",
+            "answer": ""
+        }
+        login_headers = {
+            "X-Requested-With": "XMLHttpRequest",
+            "Referer": f"{PC_BASE}/member.php?mod=logging&action=login",
         }
 
-        res = session.post(login_url, data=login_data, timeout=20)
+        res = session.post(login_url, data=login_data, headers=login_headers, timeout=20)
 
         # 检查登录是否成功
+        if res.status_code == 403:
+            msg = "登录失败：HTTP 403（IP 被远景临时限制或触发风控，建议等待一段时间后重试）"
+            print(f"[{name}] {msg}")
+            return msg
+
         if res.status_code != 200:
             msg = f"登录失败：HTTP {res.status_code}"
+            print(f"[{name}] {msg}")
+            return msg
+
+        # Discuz 登录成功会设置 auth 会话 cookie；响应 XML 中含 "succeed"
+        login_ok = any("auth" in c.name for c in session.cookies) or "succeed" in res.text
+        if not login_ok:
+            fail_reason = re.sub(r"<[^>]+>", "", res.text).strip()[:120] or "未知原因"
+            msg = f"登录失败：{fail_reason}"
             print(f"[{name}] {msg}")
             return msg
 
